@@ -21,7 +21,7 @@ public class Test4{
     
     public static final double SECONDS_BETWEEN_FRAMES = 10;
     public static int frameCount = 0;
-    private static final String inputFilename = "/home/shell/new/b.mp4";
+    private static final String inputFilename = "/home/shell/new/d.mp4";
     public static List<String> pixelList = new ArrayList<String>();
     public static int keyFrameCount = 0;
     // The video stream index, used to ensure we display frames from one and
@@ -47,7 +47,7 @@ public class Test4{
         // dispatch events to the attached listener
         while (mediaReader.readPacket() == null) ;
         Alternate alt = new Alternate();
-        System.out.println(alt.alternate(pixelList,8,16));
+        System.out.println(alt.alternate(pixelList,8,32));
         System.out.println("Key Frame Count: " + keyFrameCount);
     }
 
