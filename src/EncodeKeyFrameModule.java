@@ -8,7 +8,6 @@ import com.xuggle.mediatool.MediaListenerAdapter;
 import com.xuggle.mediatool.ToolFactory;
 import com.xuggle.mediatool.event.IAudioSamplesEvent;
 import com.xuggle.mediatool.event.IVideoPictureEvent;
-import com.xuggle.xuggler.ICodec;
 import com.xuggle.xuggler.IAudioSamples;
 import com.xuggle.xuggler.IContainer;
 import com.xuggle.xuggler.IRational;
@@ -17,71 +16,30 @@ import com.xuggle.xuggler.IStreamCoder;
 import com.xuggle.xuggler.IVideoPicture;
 
 
-public class EncodeModule {
+public class EncodeKeyFrameModule {
 	public static int mAudioStreamIndex = -1, mVideoStreamIndex = -1, frameCount = 0, keyFrameCount = 0;
 	public static List<String> pixelList = new ArrayList<String>();
 	public static IMediaWriter writer;
 	
 	public static boolean EncodeVideo(String inputFileName, String outputFileName, String message)
 	{
-		int audioStreamBool = -1, videoStreamBool = -1;
-        int streamCount = 0;
 		IMediaReader mediaReader = ToolFactory.makeReader(inputFileName);
 		mediaReader.setBufferedImageTypeToGenerate(BufferedImage.TYPE_3BYTE_BGR);
 		IContainer container = IContainer.make();
         // we attempt to open up the container
         int result = container.open(inputFileName, IContainer.Type.READ, null);
         // check if the operation was successful
-        streamCount = container.getNumStreams();
         if (result<0)
-        {
-        	throw new RuntimeException("Failed to open media file");
-        }
-            
-        
-        if(streamCount < 2)
-        {
-        	System.out.println("This is not a proper video!");
-        	return false;
-        }
-        
-        //Selecting audio and video streams
-        for(int x=0;x<streamCount;x++)
-        {
-        	if(audioStreamBool == -1 || videoStreamBool == -1 )
-        	{
-        		IStream randomStream = container.getStream(x);
-        		IStreamCoder randomCoder = randomStream.getStreamCoder();
-        		if(randomCoder.getCodecType() == ICodec.Type.CODEC_TYPE_VIDEO)
-        		{
-        			
-        			videoStreamBool = x;
-        		}
-        		else if(randomCoder.getCodecType() == ICodec.Type.CODEC_TYPE_AUDIO)
-        		{
-        			audioStreamBool = x;
-        		}
-        	}
-        	else
-        	{
-        		break;
-        	}
-        }
-        
-        if(audioStreamBool == -1|| videoStreamBool == -1)
-        {
-        	System.out.println("Error in streams");
-        	return false;
-        }
-        IStream stream = container.getStream(videoStreamBool);
-        IStream audiostream = container.getStream(audioStreamBool);
+            throw new RuntimeException("Failed to open media file");
+		
+        IStream stream = container.getStream(0);
+        IStream audiostream = container.getStream(1);
         IRational fps = stream.getFrameRate();
         IStreamCoder coder = stream.getStreamCoder();
         IStreamCoder audioCoder = audiostream.getStreamCoder();
         writer = ToolFactory.makeWriter(outputFileName);
         writer.addVideoStream(0, 0, coder.getCodecID() ,coder.getWidth(),coder.getHeight());
         writer.addAudioStream(1, 1, audioCoder.getCodecID(), audioCoder.getChannels(), audioCoder.getSampleRate());
-        
         mediaReader.addListener(new AudioSampleListener());
         mediaReader.addListener(new ImageSnapListener());
         while (mediaReader.readPacket() == null) ;
@@ -108,10 +66,7 @@ public class EncodeModule {
             //System.out.println("Loop Running");                    
             BufferedImage image = event.getImage();
             IVideoPicture vidPic = event.getMediaData();
-            if(vidPic.isKeyFrame())
-            {
-            	keyFrameCount ++ ;
-            }
+            
             BufferedImage bgrScreen = convertToType(image, BufferedImage.TYPE_3BYTE_BGR);
             //BufferedImage bgrScreen = image;
             Dimension siz = new Dimension();
@@ -119,17 +74,21 @@ public class EncodeModule {
             siz.height = bgrScreen.getHeight();
             Alternate alt = new Alternate();
             Dimension location = alt.pixelSelector(siz, frameCount);
+            /*if(vidPic.isKeyFrame())
+            {
+            	keyFrameCount ++ ;
+            	if(frameCount % 2 == 0)
+                {
+                	bgrScreen.setRGB(location.width, location.height, 
+                			bgrScreen.getRGB(location.width, location.height) | 0x00FF0000 );
+                }
+                else
+                {
+                	bgrScreen.setRGB(location.width, location.height, 
+                			bgrScreen.getRGB(location.width, location.height) & 0xFF00FFFF );
+                }
+            }*/
             
-            if(frameCount % 2 == 0)
-            {
-            	bgrScreen.setRGB(location.width, location.height, 
-            			bgrScreen.getRGB(location.width, location.height) | 0x00FF0000 );
-            }
-            else
-            {
-            	bgrScreen.setRGB(location.width, location.height, 
-            			bgrScreen.getRGB(location.width, location.height) & 0xFF00FFFF );
-            }
             
             frameCount ++ ;
             //System.out.println(Integer.toBinaryString(bgrScreen.getRGB(300, 300)));
