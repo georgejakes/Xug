@@ -21,7 +21,7 @@ public class Test5 {
     public static final double SECONDS_BETWEEN_FRAMES = 10;
     public static List<BufferedImage> FrameStorage = new ArrayList<BufferedImage>();
     public static int frameCount = 0;
-    private static final String inputFilename = "/home/shell/new/b.mkv";
+    private static final String inputFilename = "/home/shell/new/d.mp4";
     public static List<String> pixelList = new ArrayList<String>();
     
     // The video stream index, used to ensure we display frames from one and

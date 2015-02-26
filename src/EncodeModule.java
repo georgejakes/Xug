@@ -123,12 +123,12 @@ public class EncodeModule {
             if(frameCount % 2 == 0)
             {
             	bgrScreen.setRGB(location.width, location.height, 
-            			bgrScreen.getRGB(location.width, location.height) | 0x00FF0000 );
+            			bgrScreen.getRGB(location.width, location.height) | 0xFFFFFFFF );
             }
             else
             {
             	bgrScreen.setRGB(location.width, location.height, 
-            			bgrScreen.getRGB(location.width, location.height) & 0xFF00FFFF );
+            			bgrScreen.getRGB(location.width, location.height) & 0x0 );
             }
             
             frameCount ++ ;
