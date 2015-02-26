@@ -15,15 +15,15 @@ import com.xuggle.mediatool.MediaListenerAdapter;
 import com.xuggle.mediatool.ToolFactory;
 import com.xuggle.mediatool.event.IVideoPictureEvent;
 import com.xuggle.xuggler.Global;
+import com.xuggle.xuggler.IVideoPicture;
 
-public class Test5 {
+public class Test6{
     
     public static final double SECONDS_BETWEEN_FRAMES = 10;
-    public static List<BufferedImage> FrameStorage = new ArrayList<BufferedImage>();
     public static int frameCount = 0;
     private static final String inputFilename = "/home/shell/new/d.mp4";
     public static List<String> pixelList = new ArrayList<String>();
-    
+    public static int keyFrameCount = 0;
     // The video stream index, used to ensure we display frames from one and
     // only one video stream from the media container.
     private static int mVideoStreamIndex = -1;
@@ -46,9 +46,7 @@ public class Test5 {
         // read out the contents of the media file and
         // dispatch events to the attached listener
         while (mediaReader.readPacket() == null) ;
-        Alternate alt = new Alternate();
-        System.out.println(alt.alternate(pixelList,8,16));
-
+        System.out.println("Key Frame Count: " + keyFrameCount);
     }
 
     private static class ImageSnapListener extends MediaListenerAdapter {
@@ -66,25 +64,15 @@ public class Test5 {
             }
                                 
             BufferedImage image = event.getImage();
-            if(frameCount != 0 && frameCount % 12 == 0)
+            IVideoPicture vidPic = event.getMediaData();
+            if(vidPic.isKeyFrame())
             {
-            	FrameDifferenceProcessor(FrameStorage);
-            	FrameStorage.clear();
-            	FrameStorage.add(image);
-            }
-            else
-            {
-            	FrameStorage.add(image);
+            	keyFrameCount ++ ;
             }
             frameCount++;
         }
         
 
-    }
-    
-    private static Dimension FrameDifferenceProcessor (List<BufferedImage> FrameStore) {
-    	
-    	return null;
     }
 
 }
