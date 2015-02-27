@@ -1,7 +1,9 @@
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+
 import com.xuggle.mediatool.IMediaReader;
 import com.xuggle.mediatool.IMediaWriter;
 import com.xuggle.mediatool.MediaListenerAdapter;
@@ -21,11 +23,15 @@ public class EncodeModule {
 	public static int mAudioStreamIndex = -1, mVideoStreamIndex = -1, frameCount = 0, keyFrameCount = 0;
 	public static List<String> pixelList = new ArrayList<String>();
 	public static IMediaWriter writer;
+	public static Resolution resolution;
+	public static int limit;
 	
-	public static boolean EncodeVideo(String inputFileName, String outputFileName, String message)
+	
+	public static boolean EncodeVideo(String inputFileName, String outputFileName, String message, int lim)
 	{
 		int audioStreamBool = -1, videoStreamBool = -1;
         int streamCount = 0;
+        limit = lim;
 		IMediaReader mediaReader = ToolFactory.makeReader(inputFileName);
 		mediaReader.setBufferedImageTypeToGenerate(BufferedImage.TYPE_3BYTE_BGR);
 		IContainer container = IContainer.make();
@@ -79,6 +85,7 @@ public class EncodeModule {
         IStreamCoder coder = stream.getStreamCoder();
         IStreamCoder audioCoder = audiostream.getStreamCoder();
         writer = ToolFactory.makeWriter(outputFileName);
+        resolution = new Resolution(coder.getWidth(), coder.getHeight());
         writer.addVideoStream(0, 0, coder.getCodecID() ,coder.getWidth(),coder.getHeight());
         writer.addAudioStream(1, 1, audioCoder.getCodecID(), audioCoder.getChannels(), audioCoder.getSampleRate());
         
@@ -104,7 +111,9 @@ public class EncodeModule {
                 else
                     return;
             }
-
+            //Receive selected Pixels
+            ArrayList<Location> selectedPixels = new PSA().psa(limit, resolution);
+            
             //System.out.println("Loop Running");                    
             BufferedImage image = event.getImage();
             IVideoPicture vidPic = event.getMediaData();
@@ -119,25 +128,32 @@ public class EncodeModule {
             siz.height = bgrScreen.getHeight();
             Alternate alt = new Alternate();
             Dimension location = alt.pixelSelector(siz, frameCount);
+            Iterator<Location> iter = selectedPixels.iterator();
+            while(iter.hasNext())
+            {
+            	Location l = iter.next();
+            	if(frameCount % 2 == 0)
+                {
+                	bgrScreen.setRGB(l.width, l.height, 
+                			bgrScreen.getRGB(l.width, l.height) | 0xFFFFFFFF );
+                }
+                else
+                {
+                	bgrScreen.setRGB(l.width, l.height, 
+                			bgrScreen.getRGB(l.width, l.height) & 0x0 );
+                }
+            	System.out.println(frameCount + ". Pixel Change at: " + l.width + " , " + l.height
+                		+ " to --> " + Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)));
+                pixelList.add(Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)));
+                //writer.encodeVideo(0, bgrScreen,System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
+                writer.encodeVideo(0, bgrScreen,event.getTimeStamp(event.getTimeUnit()), event.getTimeUnit());
+            }
             
-            if(frameCount % 2 == 0)
-            {
-            	bgrScreen.setRGB(location.width, location.height, 
-            			bgrScreen.getRGB(location.width, location.height) | 0xFFFFFFFF );
-            }
-            else
-            {
-            	bgrScreen.setRGB(location.width, location.height, 
-            			bgrScreen.getRGB(location.width, location.height) & 0x0 );
-            }
+            
             
             frameCount ++ ;
             //System.out.println(Integer.toBinaryString(bgrScreen.getRGB(300, 300)));
-            System.out.println(frameCount + ". Pixel Change at: " + location.width + " , " + location.height
-            		+ " to --> " + Integer.toBinaryString(bgrScreen.getRGB(location.width, location.height)));
-            pixelList.add(Integer.toBinaryString(bgrScreen.getRGB(location.width, location.height)));
-            //writer.encodeVideo(0, bgrScreen,System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
-            writer.encodeVideo(0, bgrScreen,event.getTimeStamp(event.getTimeUnit()), event.getTimeUnit());
+            
             
             /*
             try {

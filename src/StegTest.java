@@ -83,7 +83,7 @@ public class StegTest {
         writer.close();
         container.close();
         Alternate alt = new Alternate();
-        System.out.println(alt.alternate(pixelList,8,16));
+        System.out.println(alt.alternate(pixelList,8,16,0));
         System.out.println("Key Frame Count: " + keyFrameCount);
 	}
 	

@@ -61,7 +61,7 @@ public class Alternate {
 		return maxBit;
 	}
 
-	public String alternate(List<String> pixels, int start, int end){
+	public String alternate(List<String> pixels, int start, int end, int limit){
 		List<Integer> maxBits= maxIntRange(pixels, start, end);
 		String s = "";
 		int errorCount = 0, tempError = 0, i = 0;

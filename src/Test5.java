@@ -47,7 +47,7 @@ public class Test5 {
         // dispatch events to the attached listener
         while (mediaReader.readPacket() == null) ;
         Alternate alt = new Alternate();
-        System.out.println(alt.alternate(pixelList,8,16));
+        System.out.println(alt.alternate(pixelList,8,16,8));
 
     }
 
