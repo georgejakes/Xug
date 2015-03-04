@@ -21,8 +21,9 @@ static int counter=0;
 		return result;
 		
 	}
-	public ArrayList<Location> psa(int limit, Resolution res)
+	public ArrayList<Location> psa(int limit, Resolution res, String passphrase)
 	{
+		
 		ArrayList<Location> result= new ArrayList<Location>();
 		int i=0,count=counter;
 		

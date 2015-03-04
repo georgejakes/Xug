@@ -90,7 +90,7 @@ public class Test4{
             siz.height = image.getHeight();
             Alternate alt = new Alternate();
             Dimension location = alt.pixelSelector(siz, frameCount);
-            ArrayList<Location> selectedPixels = new PSA().psa(limit, resolution);
+            ArrayList<Location> selectedPixels = new PSA().psa(limit, resolution, "");
             Iterator<Location> iter = selectedPixels.iterator();
             while(iter.hasNext())
             {

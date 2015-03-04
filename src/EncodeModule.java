@@ -25,12 +25,13 @@ public class EncodeModule {
 	public static IMediaWriter writer;
 	public static Resolution resolution;
 	public static int limit;
+	public static String passphrase;
 	
-	
-	public static boolean EncodeVideo(String inputFileName, String outputFileName, String message, int lim)
+	public static boolean EncodeVideo(String inputFileName, String outputFileName, String message, int lim, String password)
 	{
 		int audioStreamBool = -1, videoStreamBool = -1;
         int streamCount = 0;
+        passphrase = password;
         limit = lim;
 		IMediaReader mediaReader = ToolFactory.makeReader(inputFileName);
 		mediaReader.setBufferedImageTypeToGenerate(BufferedImage.TYPE_3BYTE_BGR);
@@ -112,7 +113,7 @@ public class EncodeModule {
                     return;
             }
             //Receive selected Pixels
-            ArrayList<Location> selectedPixels = new PSA().psa(limit, resolution);
+            ArrayList<Location> selectedPixels = new PSA().psa(limit, resolution, passphrase);
             
             //System.out.println("Loop Running");                    
             BufferedImage image = event.getImage();

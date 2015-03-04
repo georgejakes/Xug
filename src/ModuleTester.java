@@ -9,7 +9,7 @@ public class ModuleTester {
 		EncodeModule enc = new EncodeModule();
 
 		
-		enc.EncodeVideo("/media/OS/aerounwired.mp4", "/home/shell/new/d.mp4", " ", 8);
+		enc.EncodeVideo("/media/OS/aerounwired.mp4", "/home/shell/new/d.mp4", " ", 8, "");
 	
 		
 		/*System.out.println("1");
