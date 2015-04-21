@@ -20,19 +20,45 @@ import com.xuggle.xuggler.IVideoPicture;
 
 
 public class EncodeModule {
-	public static int mAudioStreamIndex = -1, mVideoStreamIndex = -1, frameCount = 0, keyFrameCount = 0;
-	public static List<String> pixelList = new ArrayList<String>();
+	public static int mAudioStreamIndex, mVideoStreamIndex, frameCount, keyFrameCount;
+	public static List<String> pixelList;
 	public static IMediaWriter writer;
 	public static Resolution resolution;
-	public static int limit;
+	public static int messageLimitPerFrame;
 	public static String passphrase;
+	public static int clusterLimit;
+	public static int clusterCount;
+	public static String clusterString; //String to be embedded in corners for cluster identification
 	
-	public static boolean EncodeVideo(String inputFileName, String outputFileName, String message, int lim, String password)
+	private static void init()
 	{
+		mAudioStreamIndex = -1;
+		mVideoStreamIndex = -1;
+		frameCount = 0;
+		keyFrameCount = 0;
+		clusterCount = 1;
+		clusterLimit = 1;
+		pixelList = new ArrayList<String>();
+	}
+	/**
+	 * Encode Video Module
+	 * @param inputFileName File Location for input and name of file
+	 * @param outputFileName File location for output and name of file
+	 * @param message Message that needs to be encoded
+	 * @param msgLimitPerFrame Number of bits that needs to be encoded from the message per frame
+	 * @param password Password for the pixel selection algorithm
+	 * @param clusterNumber The number of repetitions per frame
+	 * @return 'True' if Encoding was successful.
+	 */
+	public static boolean EncodeVideo(String inputFileName, String outputFileName, String message, int msgLimitPerFrame, String password, int clusterNumber)
+	{
+		init();
+		passphrase = password;
+        messageLimitPerFrame = msgLimitPerFrame;
+        clusterLimit = clusterNumber;
+        clusterString = Cluster.getClusterStringPattern(clusterNumber);
 		int audioStreamBool = -1, videoStreamBool = -1;
         int streamCount = 0;
-        passphrase = password;
-        limit = lim;
 		IMediaReader mediaReader = ToolFactory.makeReader(inputFileName);
 		mediaReader.setBufferedImageTypeToGenerate(BufferedImage.TYPE_3BYTE_BGR);
 		IContainer container = IContainer.make();
@@ -113,7 +139,7 @@ public class EncodeModule {
                     return;
             }
             //Receive selected Pixels
-            ArrayList<Location> selectedPixels = new PSA().psa(limit, resolution, passphrase);
+            ArrayList<Location> selectedPixels = new PSA().psa(messageLimitPerFrame, resolution, passphrase);
             
             //System.out.println("Loop Running");                    
             BufferedImage image = event.getImage();

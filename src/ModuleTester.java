@@ -6,10 +6,10 @@ import java.util.List;
 public class ModuleTester {
 	public static void main(String args[])
 	{
-		EncodeModule enc = new EncodeModule();
+		//EncodeModule enc = new EncodeModule();
 
 		
-		enc.EncodeVideo("/media/OS/aerounwired.mp4", "/home/shell/new/d.mp4", " ", 8, "");
+		//enc.EncodeVideo("/media/OS/aerounwired.mp4", "/home/shell/new/d.mp4", " ", 8, "");
 	
 		
 		/*System.out.println("1");
@@ -23,5 +23,16 @@ public class ModuleTester {
 
 	
 	}*/
-}}
+	
+		String list = "10001100011000110001100110";
+		Cluster temp = new Cluster(5);
+		ArrayList<Integer> a = temp.GetCluster(list);
+		for(int i:a)
+		{
+			System.out.println(i);
+		}
+		String bin = StringBinary.toBinary("abcd");
+		System.out.println(StringBinary.toString(bin));
+	}
+}
 

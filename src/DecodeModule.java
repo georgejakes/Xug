@@ -16,17 +16,19 @@ import com.xuggle.xuggler.IVideoPicture;
 
 public class DecodeModule {
 	
-	public static int mAudioStreamIndex = -1, mVideoStreamIndex = -1, frameCount = 0, keyFrameCount = 0;
+	public static int mAudioStreamIndex, mVideoStreamIndex, frameCount, keyFrameCount;
 	public static Resolution resolution;
-	public static int limit = 1;
-	public static List<String> pixelList = new ArrayList<String>();
+	public static List<String> pixelList;
 	public static int MSBLimit = 8;
+	public static int limit = 1;
 	
 	public static String DecodeVideo(String inputFileName, int lim, String password)
 	{
+		init();
 		IMediaReader mediaReader = ToolFactory.makeReader(inputFileName);
 		mediaReader.setBufferedImageTypeToGenerate(BufferedImage.TYPE_3BYTE_BGR);
 		IContainer container = IContainer.make();
+		
 		int result = container.open(inputFileName, IContainer.Type.READ, null);
         if (result<0)
         {
@@ -39,6 +41,22 @@ public class DecodeModule {
         mediaReader.addListener(new ImageSnapListener());
 		return null;
 	}
+	
+	public static String DecodeVideo(String inputFileName, int lim, ArrayList<Integer> clusterList, String password)
+	{
+		init();
+		return null;
+	}
+	
+	private static void init()
+	{
+		pixelList = new ArrayList<String>();
+		mAudioStreamIndex = -1; 
+		mVideoStreamIndex = -1;
+		frameCount = 0; 
+		keyFrameCount = 0;
+	}
+	
 	
 	private static class ImageSnapListener extends MediaListenerAdapter {
 
