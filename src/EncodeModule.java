@@ -25,10 +25,15 @@ public class EncodeModule {
 	public static IMediaWriter writer;
 	public static Resolution resolution;
 	public static int messageLimitPerFrame;
-	public static String passphrase;
+	public static String bitMessage;
+	public static int bitMessageCounter;
+	public static Passphrase passphrase;
 	public static int clusterLimit;
 	public static int clusterCount;
 	public static String clusterString; //String to be embedded in corners for cluster identification
+	public static int clusterCounter;
+	public static int MSBThreshold;
+	public static int[] ZeroOne;
 	
 	private static void init()
 	{
@@ -36,10 +41,15 @@ public class EncodeModule {
 		mVideoStreamIndex = -1;
 		frameCount = 0;
 		keyFrameCount = 0;
-		clusterCount = 1;
+		clusterCount = 0;
 		clusterLimit = 1;
+		bitMessageCounter = 0;
+		bitMessage = "";
+		MSBThreshold = 0;
+		clusterCounter = 0;
 		pixelList = new ArrayList<String>();
 	}
+	
 	/**
 	 * Encode Video Module
 	 * @param inputFileName File Location for input and name of file
@@ -48,15 +58,30 @@ public class EncodeModule {
 	 * @param msgLimitPerFrame Number of bits that needs to be encoded from the message per frame
 	 * @param password Password for the pixel selection algorithm
 	 * @param clusterNumber The number of repetitions per frame
+	 * @param threshold The number of bits changed from the MSB in each color of a pixel
 	 * @return 'True' if Encoding was successful.
 	 */
-	public static boolean EncodeVideo(String inputFileName, String outputFileName, String message, int msgLimitPerFrame, String password, int clusterNumber)
+	public static boolean EncodeVideo(String inputFileName, String outputFileName, String message, int msgLimitPerFrame, String password, int clusterNumber, int threshold)
 	{
 		init();
-		passphrase = password;
+		passphrase = new Passphrase(password);
         messageLimitPerFrame = msgLimitPerFrame;
         clusterLimit = clusterNumber;
         clusterString = Cluster.getClusterStringPattern(clusterNumber);
+        bitMessage = StringBinary.toBinary(message);
+        MSBThreshold = threshold;
+        ZeroOne = ZeroOneGenerator.Generate(MSBThreshold);
+        
+        if(clusterString.length() != clusterLimit)
+        {
+        	throw new RuntimeException("Cluster pattern failed to generate properly");
+        }
+        
+        if(bitMessage.length() % 8 != 0)
+        {
+        	throw new RuntimeException("Faulty Byte generation");
+        }
+        
 		int audioStreamBool = -1, videoStreamBool = -1;
         int streamCount = 0;
 		IMediaReader mediaReader = ToolFactory.makeReader(inputFileName);
@@ -139,7 +164,7 @@ public class EncodeModule {
                     return;
             }
             //Receive selected Pixels
-            ArrayList<Location> selectedPixels = new PSA().psa(messageLimitPerFrame, resolution, passphrase);
+            
             
             //System.out.println("Loop Running");                    
             BufferedImage image = event.getImage();
@@ -153,31 +178,97 @@ public class EncodeModule {
             Dimension siz = new Dimension();
             siz.width = bgrScreen.getWidth();
             siz.height = bgrScreen.getHeight();
-            Alternate alt = new Alternate();
-            Dimension location = alt.pixelSelector(siz, frameCount);
+            
+            if(siz.width != resolution.maxWidth)
+            {
+            	throw new RuntimeException("Width does not match");
+            }
+            
+            if(clusterCount < clusterLimit)
+            {
+            	if(Character.getNumericValue(clusterString.charAt(clusterCount)) == 1)
+            	{
+                	bgrScreen.setRGB(0, 0, 
+                			bgrScreen.getRGB(0, 0) | ZeroOne[1] );
+                	bgrScreen.setRGB(resolution.maxWidth-1, 0, 
+                			bgrScreen.getRGB(resolution.maxWidth-1, 0) | ZeroOne[1] );
+                	bgrScreen.setRGB(0, resolution.maxHeight-1, 
+                			bgrScreen.getRGB(0, resolution.maxHeight-1) | ZeroOne[1] );
+                	bgrScreen.setRGB(resolution.maxWidth-1, resolution.maxHeight-1,
+                			bgrScreen.getRGB(resolution.maxWidth-1, resolution.maxHeight-1) | ZeroOne[1] );
+                }
+            	else
+            	{
+            		bgrScreen.setRGB(0, 0, 
+                			bgrScreen.getRGB(0, 0) & ZeroOne[0] );
+                	bgrScreen.setRGB(resolution.maxWidth-1, 0, 
+                			bgrScreen.getRGB(resolution.maxWidth-1, 0) & ZeroOne[0] );
+                	bgrScreen.setRGB(0, resolution.maxHeight-1, 
+                			bgrScreen.getRGB(0, resolution.maxHeight-1) & ZeroOne[0] );
+                	bgrScreen.setRGB(resolution.maxWidth-1, resolution.maxHeight-1, 
+                			bgrScreen.getRGB(resolution.maxWidth-1, resolution.maxHeight-1) & ZeroOne[0] );
+            	}
+            	clusterCount++;
+            }
+            else
+            {
+            	clusterCount = 0;
+            	if(Character.getNumericValue(clusterString.charAt(clusterCount)) == 1)
+            	{
+                	bgrScreen.setRGB(0, 0, 
+                			bgrScreen.getRGB(0, 0) | ZeroOne[1] );
+                	bgrScreen.setRGB(resolution.maxWidth-1, 0, 
+                			bgrScreen.getRGB(resolution.maxWidth-1, 0) | ZeroOne[1] );
+                	bgrScreen.setRGB(0, resolution.maxHeight-1, 
+                			bgrScreen.getRGB(0, resolution.maxHeight-1) | ZeroOne[1] );
+                	bgrScreen.setRGB(resolution.maxWidth-1, resolution.maxHeight-1,
+                			bgrScreen.getRGB(resolution.maxWidth-1, resolution.maxHeight-1) | ZeroOne[1] );
+                }
+            	else
+            	{
+            		bgrScreen.setRGB(0, 0, 
+                			bgrScreen.getRGB(0, 0) & ZeroOne[0] );
+                	bgrScreen.setRGB(resolution.maxWidth-1, 0, 
+                			bgrScreen.getRGB(resolution.maxWidth-1, 0) & ZeroOne[0] );
+                	bgrScreen.setRGB(0, resolution.maxHeight-1, 
+                			bgrScreen.getRGB(0, resolution.maxHeight-1) & ZeroOne[0] );
+                	bgrScreen.setRGB(resolution.maxWidth-1, resolution.maxHeight-1, 
+                			bgrScreen.getRGB(resolution.maxWidth-1, resolution.maxHeight-1) & ZeroOne[0] );
+            	}
+            	clusterCount++;
+            	bitMessageCounter += messageLimitPerFrame;
+            	clusterCounter++;
+            }
+            ArrayList<Location> selectedPixels = new PSA().psa(messageLimitPerFrame, resolution, passphrase, clusterCounter);
             Iterator<Location> iter = selectedPixels.iterator();
+            int currentMessageBit = bitMessageCounter;
             while(iter.hasNext())
             {
             	Location l = iter.next();
-            	if(frameCount % 2 == 0)
-                {
-                	bgrScreen.setRGB(l.width, l.height, 
-                			bgrScreen.getRGB(l.width, l.height) | 0xFFFFFFFF );
-                }
-                else
-                {
-                	bgrScreen.setRGB(l.width, l.height, 
-                			bgrScreen.getRGB(l.width, l.height) & 0x0 );
-                }
+            	if(bitMessage.length() > currentMessageBit)
+            	{
+            		if(Character.getNumericValue(bitMessage.charAt(currentMessageBit)) == 1)
+                    {
+                    	bgrScreen.setRGB(l.width, l.height, 
+                    			bgrScreen.getRGB(l.width, l.height) | ZeroOne[1] );
+                    }
+                    else
+                    {
+                    	bgrScreen.setRGB(l.width, l.height, 
+                    			bgrScreen.getRGB(l.width, l.height) & ZeroOne[0] );
+                    }
+            	}
+            	
             	System.out.println(frameCount + ". Pixel Change at: " + l.width + " , " + l.height
                 		+ " to --> " + Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)));
                 pixelList.add(Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)));
                 //writer.encodeVideo(0, bgrScreen,System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
-                writer.encodeVideo(0, bgrScreen,event.getTimeStamp(event.getTimeUnit()), event.getTimeUnit());
+                
+                currentMessageBit++;
             }
             
             
-            
+            writer.encodeVideo(0, bgrScreen,event.getTimeStamp(event.getTimeUnit()), event.getTimeUnit());
             frameCount ++ ;
             //System.out.println(Integer.toBinaryString(bgrScreen.getRGB(300, 300)));
             

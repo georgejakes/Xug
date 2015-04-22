@@ -12,16 +12,25 @@ import java.util.List;
 public class PSA {
 static int counter=0;
 
-	public boolean checkContains(ArrayList<Location> list,int height, int width){
+	public boolean checkContains(ArrayList<Location> list,int height, int width,Resolution res){
 		boolean result=false;
 		
 		Location newloc= new Location(height,width);
+		Location l1 = new Location(0,0);
+		Location l2 = new Location(0,res.maxWidth-1);
+		Location l3 = new Location(res.maxHeight-1,0);
+		Location l4 = new Location(res.maxHeight-1,res.maxWidth-1);
 		
-		result=list.contains(newloc);
+		if(newloc==l1||newloc==l2||newloc==l3||newloc==l4){
+			result = true;
+		}
+		else{
+		result=list.contains(newloc);}
+		
 		return result;
 		
 	}
-	public ArrayList<Location> psa(int limit, Resolution res, String passphrase)
+	public ArrayList<Location> psa(int limit, Resolution res, Passphrase passphrase,int counter)
 	{
 		
 		ArrayList<Location> result= new ArrayList<Location>();
@@ -33,8 +42,8 @@ static int counter=0;
 			Location l=new Location();
 			if(i==0)
 			{
-				l.width=0;
-				l.height=0;
+				l.width=passphrase.getcode()*(counter+1)%res.maxWidth;
+				l.height=passphrase.getcode()*(counter+1)%res.maxHeight;
 				result.add(l);
 				i++;
 				count++;
@@ -42,7 +51,7 @@ static int counter=0;
 			else{
 			l.height=(l.height+(l.width+1)*count*limit)%res.maxHeight;
 			l.width=(l.width+(l.height+1)*count*limit)%res.maxWidth;
-			if(!checkContains(result,l.height,l.width))
+			if(!checkContains(result,l.height,l.width,res))
 			{
 				result.add(l);
 				i++;

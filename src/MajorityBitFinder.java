@@ -23,7 +23,7 @@ public class MajorityBitFinder {
 			return 2;
 	}
 	
-	public static int MajorityBit(String color, int start, int finish)
+	private static int MajorityBit(String color, int start, int finish)
 	{
 		int[] tally = {0,0};
 		for(int i=start;i<finish;i++)

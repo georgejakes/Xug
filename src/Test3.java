@@ -5,7 +5,7 @@ import com.xuggle.xuggler.IStreamCoder;
 
 public class Test3 {
     
-    private static final String filename = "/home/shell/new/b.mp4";
+    private static final String filename = "/home/shell/new/d.mp4";
     
     public static void main(String[] args) {
         
@@ -25,6 +25,7 @@ public class Test3 {
         // query for the total duration
         long duration = container.getDuration();
         
+        
         // query for the file size
         long fileSize = container.getFileSize();
 
@@ -32,7 +33,7 @@ public class Test3 {
         long bitRate = container.getBitRate();
         
         System.out.println("Number of streams: " + numStreams);
-        System.out.println("Duration (s): " + duration/(1000000.0 * 60));
+        System.out.println("Duration (s): " + duration/(1000000.0));
         System.out.println("File Size (bytes): " + fileSize);
         System.out.println("Bit Rate: " + bitRate);
         
@@ -70,6 +71,7 @@ public class Test3 {
                 System.out.printf("height: %d; ", coder.getHeight());
                 System.out.printf("format: %s; ", coder.getPixelType());
                 System.out.printf("frame-rate: %5.2f; ", coder.getFrameRate().getDouble());
+                System.out.println("frameCount: " + coder.getFrameRate().getDouble() * (duration/(1000000.0)));
             }
             
             System.out.println();
