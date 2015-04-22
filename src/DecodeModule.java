@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import com.xuggle.mediatool.IMediaReader;
+import com.xuggle.mediatool.IMediaViewer;
 import com.xuggle.mediatool.MediaListenerAdapter;
 import com.xuggle.mediatool.ToolFactory;
 import com.xuggle.mediatool.event.IVideoPictureEvent;
@@ -19,22 +20,38 @@ public class DecodeModule {
 	
 	public static int mAudioStreamIndex, mVideoStreamIndex, frameCount, keyFrameCount;
 	public static Resolution resolution;
-	public static List<String> pixelList;
+	public static ArrayList<Integer> pixelList;
 	public static int MSBThreshold;
-	public static int limit = 1;
+	public static int MessageLimitPerFrame;
 	public static Passphrase passphrase;
 	public static boolean ClusterSetting; 
 	public static String ClusterString;
+	public static ArrayList<Integer> Cluster;
+	public static int ClusterCount;
+	public static int ClusterCounter;
+	public static int ClusterSize;
+	public static ArrayList<ZeroOne> ZeroOneCounter;
+	public static String finalMessage;
+	public static int shortCluster; // 0 - First Short Cluster found, 1 - second short cluster found, 2 - Actual cluster size match
+	public static int currentClusterSet;
+	public static boolean byClustList;
 	
 	private static void init(boolean ClusterSet)
 	{
-		pixelList = new ArrayList<String>();
+		pixelList = new ArrayList<Integer>();
 		mAudioStreamIndex = -1; 
 		mVideoStreamIndex = -1;
 		frameCount = 0; 
 		keyFrameCount = 0;
 		ClusterSetting = ClusterSet;
 		MSBThreshold = 8;
+		ClusterCounter = 0;
+		ClusterCount = 0;
+		MessageLimitPerFrame = 0;
+		finalMessage = "";
+		ZeroOneCounter = new ArrayList<ZeroOne>();
+		shortCluster = 2;
+		currentClusterSet = 0;
 	}
 	
 	public static String DecodeVideo(String inputFileName, int threshold)
@@ -59,16 +76,40 @@ public class DecodeModule {
         	return null;
         }
         resolution = new Resolution(coder.getWidth(), coder.getHeight());
+        
         mediaReader.addListener(new ImageSnapListener());
         while (mediaReader.readPacket() == null) ;
 		return ClusterString;
 	}
 	
-	public static String DecodeVideo(String inputFileName, int lim, ArrayList<Integer> clusterList, String password)
+	public static String DecodeVideo(String inputFileName, int MsgLimitPerFrame, String password, ArrayList<Integer> clusterList, int clusterSize, int threshold, boolean byClusterList)
 	{
 		init(false);
 		passphrase = new Passphrase(password);
-		return null;
+		Cluster = clusterList;
+		MSBThreshold = threshold;
+		MessageLimitPerFrame = MsgLimitPerFrame; 
+		ClusterSize = clusterSize;
+		byClustList = byClusterList;
+		
+		IMediaReader mediaReader = ToolFactory.makeReader(inputFileName);
+		mediaReader.setBufferedImageTypeToGenerate(BufferedImage.TYPE_3BYTE_BGR);
+		IContainer container = IContainer.make();
+		int result = container.open(inputFileName, IContainer.Type.READ, null);
+        if (result<0)
+        {
+        	throw new RuntimeException("Failed to open media file");
+        }
+        IStream stream = container.getStream(0);
+        IStreamCoder coder = stream.getStreamCoder();
+        if(coder.getCodecType() != ICodec.Type.CODEC_TYPE_VIDEO)
+        {
+        	return null;
+        }
+        resolution = new Resolution(coder.getWidth(), coder.getHeight());
+        mediaReader.addListener(new ImageSnapListener());
+        while (mediaReader.readPacket() == null) ;
+		return StringBinary.toString(finalMessage);
 	}
 	
 	private static class ImageSnapListener extends MediaListenerAdapter {
@@ -122,15 +163,183 @@ public class DecodeModule {
             }
             else
             {
-            	ArrayList<Location> selectedPixels = new PSA().psa(limit, resolution, passphrase,0);
-                Iterator<Location> iter = selectedPixels.iterator();
-                while(iter.hasNext())
-                {
-                	Location l = iter.next();
-                	System.out.println(frameCount + ". Pixel At " + l.width + "," + l.height + " --> " + 
-        					Integer.toBinaryString(image.getRGB(l.width, l.height)));
-                	pixelList.add(Integer.toBinaryString(image.getRGB(l.width, l.height)));
-                }
+            	currentClusterSet = frameCount/ClusterSize;
+            	if(byClustList)
+            	{
+                	if(ClusterCount < Cluster.size() && ClusterSize > Cluster.get(ClusterCount) && shortCluster == 2)
+                	{
+                		shortCluster = 1;
+                	}
+                	
+                	if(shortCluster == 0 && ClusterCount < Cluster.size())		
+                	{
+                		if(ClusterCounter >= Cluster.get(ClusterCount))
+                		{
+                			shortCluster = 2;
+                		}
+                		else
+                		{
+                			ClusterCounter++;
+                		}
+                	}	
+                	
+                	if(ClusterCount < Cluster.size() && ClusterCounter >= Cluster.get(ClusterCount) && shortCluster != 0)
+                	{
+                		if(ZeroOneCounter.size() > 0)
+                		{
+                			String messageTemp = Accumulate(Cluster.get(ClusterCount),ZeroOneCounter,MessageLimitPerFrame);
+                    		finalMessage += messageTemp;
+                		}
+                		if(shortCluster == 1)
+                		{
+                			shortCluster = 0;
+                		}
+                		ClusterCount++;
+                		ClusterCounter = 0;
+                		//pixelList.clear();
+                		if(ClusterCount < Cluster.size())
+                		{
+                			//System.out.println(ZeroOneCounter.size() + "1");
+                			ZeroOneCounter.clear();
+                    		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,currentClusterSet);
+                            Iterator<Location> iter = selectedPixels.iterator();
+                            while(iter.hasNext())
+                            {
+                            	Location l = iter.next();
+                            	String rgb = Integer.toBinaryString(image.getRGB(l.width, l.height));
+                            	ZeroOne zeroOneTemp = new ZeroOne();
+                            	zeroOneTemp.var[MajorityBitFinder.MajorityBitSearch(rgb, MSBThreshold)]++;
+                            	ZeroOneCounter.add(zeroOneTemp);
+                            	System.out.println(frameCount + ". Pixel At " + l.width + "," + l.height + " --> " + 
+                    					rgb);
+                            	//pixelList.add(image.getRGB(l.width, l.height));
+                            }
+                            
+                    		ClusterCounter ++;
+                		}
+                	}
+                	else if(ClusterCount == 0 && ClusterCounter == 0 && shortCluster != 0)
+                	{
+                		//System.out.println(ZeroOneCounter.size() + "3");
+            			ZeroOneCounter.clear();
+                		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,currentClusterSet);
+                        Iterator<Location> iter = selectedPixels.iterator();
+                        while(iter.hasNext())
+                        {
+                        	Location l = iter.next();
+                        	String rgb = Integer.toBinaryString(image.getRGB(l.width, l.height));
+                        	ZeroOne zeroOneTemp = new ZeroOne();
+                        	zeroOneTemp.var[MajorityBitFinder.MajorityBitSearch(rgb, MSBThreshold)]++;
+                        	ZeroOneCounter.add(zeroOneTemp);
+                        	System.out.println(frameCount + ". Pixel At " + l.width + "," + l.height + " --> " + 
+                					rgb);
+                        	//pixelList.add(image.getRGB(l.width, l.height));
+                        }
+                        
+                		ClusterCounter ++;
+                	}
+                	else if(ClusterCount < Cluster.size() && shortCluster != 0)
+                	{
+                		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,currentClusterSet);
+                        Iterator<Location> iter = selectedPixels.iterator();
+                        int i=0;
+                        while(iter.hasNext())
+                        {
+                        	//System.out.println(ZeroOneCounter.size() + "2");
+                        	Location l = iter.next();
+                        	String rgb = Integer.toBinaryString(image.getRGB(l.width, l.height));
+                        	ZeroOne zeroOneTemp = ZeroOneCounter.get(i);
+                        	zeroOneTemp.var[MajorityBitFinder.MajorityBitSearch(rgb, MSBThreshold)]++;
+                        	ZeroOneCounter.set(i, zeroOneTemp);
+                        	System.out.println(frameCount + ". Pixel At " + l.width + "," + l.height + " --> " + 
+                					rgb);
+                        	i++;
+                        	//pixelList.add(image.getRGB(l.width, l.height));
+                        }
+                        
+                		ClusterCounter++;
+                	}
+                	else
+                	{
+                		ZeroOneCounter.clear();
+                	}
+            	}
+            	else
+            	{
+                	if(ClusterCount < Cluster.size() && ClusterCounter >= ClusterSize)
+                	{
+                		String messageTemp = Accumulate(ClusterSize,ZeroOneCounter,MessageLimitPerFrame);
+                    	finalMessage += messageTemp;
+                		ClusterCount++;
+                		ClusterCounter = 0;
+                		//pixelList.clear();
+                		if(ClusterCount < Cluster.size())
+                		{
+                			//System.out.println(ZeroOneCounter.size() + "1");
+                			ZeroOneCounter.clear();
+                    		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,currentClusterSet);
+                            Iterator<Location> iter = selectedPixels.iterator();
+                            while(iter.hasNext())
+                            {
+                            	Location l = iter.next();
+                            	String rgb = Integer.toBinaryString(image.getRGB(l.width, l.height));
+                            	ZeroOne zeroOneTemp = new ZeroOne();
+                            	zeroOneTemp.var[MajorityBitFinder.MajorityBitSearch(rgb, MSBThreshold)]++;
+                            	ZeroOneCounter.add(zeroOneTemp);
+                            	System.out.println(frameCount + ". Pixel At " + l.width + "," + l.height + " --> " + 
+                    					rgb);
+                            	//pixelList.add(image.getRGB(l.width, l.height));
+                            }
+                            
+                    		ClusterCounter ++;
+                		}
+                	}
+                	else if(ClusterCount == 0 && ClusterCounter == 0)
+                	{
+                		//System.out.println(ZeroOneCounter.size() + "3");
+            			ZeroOneCounter.clear();
+                		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,currentClusterSet);
+                        Iterator<Location> iter = selectedPixels.iterator();
+                        while(iter.hasNext())
+                        {
+                        	Location l = iter.next();
+                        	String rgb = Integer.toBinaryString(image.getRGB(l.width, l.height));
+                        	ZeroOne zeroOneTemp = new ZeroOne();
+                        	zeroOneTemp.var[MajorityBitFinder.MajorityBitSearch(rgb, MSBThreshold)]++;
+                        	ZeroOneCounter.add(zeroOneTemp);
+                        	System.out.println(frameCount + ". Pixel At " + l.width + "," + l.height + " --> " + 
+                					rgb);
+                        	//pixelList.add(image.getRGB(l.width, l.height));
+                        }
+                        
+                		ClusterCounter ++;
+                	}
+                	else if(ClusterCount < Cluster.size())
+                	{
+                		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,currentClusterSet);
+                        Iterator<Location> iter = selectedPixels.iterator();
+                        int i=0;
+                        while(iter.hasNext())
+                        {
+                        	//System.out.println(ZeroOneCounter.size() + "2");
+                        	Location l = iter.next();
+                        	String rgb = Integer.toBinaryString(image.getRGB(l.width, l.height));
+                        	ZeroOne zeroOneTemp = ZeroOneCounter.get(i);
+                        	zeroOneTemp.var[MajorityBitFinder.MajorityBitSearch(rgb, MSBThreshold)]++;
+                        	ZeroOneCounter.set(i, zeroOneTemp);
+                        	System.out.println(frameCount + ". Pixel At " + l.width + "," + l.height + " --> " + 
+                					rgb);
+                        	i++;
+                        	//pixelList.add(image.getRGB(l.width, l.height));
+                        }
+                        
+                		ClusterCounter++;
+                	}
+                	else
+                	{
+                		ZeroOneCounter.clear();
+                	}
+            	}
             }
             
             frameCount++;
@@ -138,4 +347,22 @@ public class DecodeModule {
         
 
     }
+	
+	private static String Accumulate(int ClusterSize, ArrayList<ZeroOne> ZeroOneCount, int MsgLimitPerFrame)
+	{
+		String message = "";
+		for(int i=0;i<MsgLimitPerFrame;i++)
+		{
+			ZeroOne temp  = ZeroOneCount.get(i);
+			if(temp.var[0] > temp.var[1])
+			{
+				message+='0';
+			}
+			else
+			{
+				message+='1';
+			}
+		}
+		return message;
+	}
 }

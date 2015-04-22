@@ -15,11 +15,11 @@ static int counter=0;
 	public boolean checkContains(ArrayList<Location> list,int height, int width,Resolution res){
 		boolean result=false;
 		
-		Location newloc= new Location(height,width);
+		Location newloc= new Location(width,height);
 		Location l1 = new Location(0,0);
-		Location l2 = new Location(0,res.maxWidth-1);
-		Location l3 = new Location(res.maxHeight-1,0);
-		Location l4 = new Location(res.maxHeight-1,res.maxWidth-1);
+		Location l2 = new Location(res.maxWidth-1,0);
+		Location l3 = new Location(0,res.maxHeight-1);
+		Location l4 = new Location(res.maxWidth-1,res.maxHeight-1);
 		
 		if(newloc==l1||newloc==l2||newloc==l3||newloc==l4){
 			result = true;

@@ -2,8 +2,6 @@ import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
-
 import com.xuggle.mediatool.IMediaReader;
 import com.xuggle.mediatool.IMediaWriter;
 import com.xuggle.mediatool.MediaListenerAdapter;
@@ -13,7 +11,6 @@ import com.xuggle.mediatool.event.IVideoPictureEvent;
 import com.xuggle.xuggler.ICodec;
 import com.xuggle.xuggler.IAudioSamples;
 import com.xuggle.xuggler.IContainer;
-import com.xuggle.xuggler.IRational;
 import com.xuggle.xuggler.IStream;
 import com.xuggle.xuggler.IStreamCoder;
 import com.xuggle.xuggler.IVideoPicture;
@@ -21,7 +18,7 @@ import com.xuggle.xuggler.IVideoPicture;
 
 public class EncodeModule {
 	public static int mAudioStreamIndex, mVideoStreamIndex, frameCount, keyFrameCount;
-	public static List<String> pixelList;
+	//public static List<String> pixelList;
 	public static IMediaWriter writer;
 	public static Resolution resolution;
 	public static int messageLimitPerFrame;
@@ -47,7 +44,7 @@ public class EncodeModule {
 		bitMessage = "";
 		MSBThreshold = 0;
 		clusterCounter = 0;
-		pixelList = new ArrayList<String>();
+		//pixelList = new ArrayList<String>();
 	}
 	
 	/**
@@ -133,7 +130,7 @@ public class EncodeModule {
         }
         IStream stream = container.getStream(videoStreamBool);
         IStream audiostream = container.getStream(audioStreamBool);
-        IRational fps = stream.getFrameRate();
+        //IRational fps = stream.getFrameRate();
         IStreamCoder coder = stream.getStreamCoder();
         IStreamCoder audioCoder = audiostream.getStreamCoder();
         writer = ToolFactory.makeWriter(outputFileName);
@@ -261,7 +258,7 @@ public class EncodeModule {
             	
             	System.out.println(frameCount + ". Pixel Change at: " + l.width + " , " + l.height
                 		+ " to --> " + Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)));
-                pixelList.add(Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)));
+                //pixelList.add(Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)));
                 //writer.encodeVideo(0, bgrScreen,System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
                 
                 currentMessageBit++;
