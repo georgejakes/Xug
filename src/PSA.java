@@ -11,47 +11,83 @@ import java.util.List;
  */
 public class PSA {
 static int counter=0;
+public boolean IsBoundry(int width, int height, Resolution res){
+//	System.out.println(width+","+ height);
+	boolean result=false;
+	Location newloc= new Location(width,height);
+	Location l1 = new Location(0,0);
+	Location l2 = new Location(0,res.maxHeight);
+	Location l3 = new Location(res.maxWidth,0);
+	Location l4 = new Location(res.maxWidth,res.maxHeight);
+	ArrayList<Location> list = new ArrayList<Location>();
+	list.add(l1);
+	list.add(l2);
+	list.add(l3);
+	list.add(l4);
+	
+//	System.out.println("ARRAY LIST:");
+//	for(Location temp:list){
+//		System.out.println(temp.width+","+temp.height);
+//	}
+	
+//	if(checkContains(list,height,width)){
+//		result = true;
+//	}
+	return CheckContains(list,width,height);
+	
+}
+	
 
-	public boolean checkContains(ArrayList<Location> list,int height, int width,Resolution res){
-		boolean result=false;
-		
-		Location newloc= new Location(width,height);
-		Location l1 = new Location(0,0);
-		Location l2 = new Location(res.maxWidth-1,0);
-		Location l3 = new Location(0,res.maxHeight-1);
-		Location l4 = new Location(res.maxWidth-1,res.maxHeight-1);
-		
-		if(newloc==l1||newloc==l2||newloc==l3||newloc==l4){
+public boolean CheckContains(ArrayList<Location> list,int width,int height ){
+	boolean result=false;
+//	System.out.println(width+","+ height);
+	Location newloc= new Location(width,height);
+	
+
+//	result=list.contains(newloc);
+	for(Location temp:list){
+		if(newloc.height==temp.height && newloc.width==temp.width){
 			result = true;
+			
 		}
-		else{
-		result=list.contains(newloc);}
-		
-		return result;
-		
+//		System.out.println(temp.width+","+temp.height);
 	}
+//	System.out.println("Result = " + result);
+	
+	return result;
+	
+}
 	public ArrayList<Location> psa(int limit, Resolution res, Passphrase passphrase,int counter)
 	{
 		
 		ArrayList<Location> result= new ArrayList<Location>();
 		int i=0,count=counter;
-		
-		
+	
 		while(i<limit)
 		{
 			Location l=new Location();
 			if(i==0)
-			{
-				l.width=passphrase.getcode()*(counter+1)%res.maxWidth;
-				l.height=passphrase.getcode()*(counter+1)%res.maxHeight;
+			{	
+//				l.width=passphrase.getcode()*(counter+1)%res.maxWidth;
+//				l.height=passphrase.getcode()*(counter+1)%res.maxHeight;
+				l.width=1920;
+				l.height=1080;
+				if(IsBoundry(l.width,l.height,res)){
+					
+					
+					l.width = (l.width  + 10) % res.maxWidth;
+					l.height=( l.height + 10) % res.maxHeight;
+				
+				}
 				result.add(l);
+				
 				i++;
 				count++;
 			}
 			else{
 			l.height=(l.height+(l.width+1)*count*limit)%res.maxHeight;
 			l.width=(l.width+(l.height+1)*count*limit)%res.maxWidth;
-			if(!checkContains(result,l.height,l.width,res))
+			if(!CheckContains(result,l.width,l.height)&&!IsBoundry(l.width,l.height, res))
 			{
 				result.add(l);
 				i++;

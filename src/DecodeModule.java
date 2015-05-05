@@ -27,8 +27,8 @@ public class DecodeModule {
 	public static boolean ClusterSetting; 
 	public static String ClusterString;
 	public static ArrayList<Integer> Cluster;
-	public static int ClusterCount;
-	public static int ClusterCounter;
+	public static int ClusterCount;	//Counts current cluster being focused
+	public static int ClusterCounter; //Counts individual cluster volume
 	public static int ClusterSize;
 	public static ArrayList<ZeroOne> ZeroOneCounter;
 	public static String finalMessage;
@@ -166,34 +166,15 @@ public class DecodeModule {
             	currentClusterSet = frameCount/ClusterSize;
             	if(byClustList)
             	{
-                	if(ClusterCount < Cluster.size() && ClusterSize > Cluster.get(ClusterCount) && shortCluster == 2)
-                	{
-                		shortCluster = 1;
-                	}
-                	
-                	if(shortCluster == 0 && ClusterCount < Cluster.size())		
-                	{
-                		if(ClusterCounter >= Cluster.get(ClusterCount))
-                		{
-                			shortCluster = 2;
-                		}
-                		else
-                		{
-                			ClusterCounter++;
-                		}
-                	}	
-                	
-                	if(ClusterCount < Cluster.size() && ClusterCounter >= Cluster.get(ClusterCount) && shortCluster != 0)
+            		
+                	if(ClusterCount < Cluster.size() && ClusterCounter >= Cluster.get(ClusterCount))
                 	{
                 		if(ZeroOneCounter.size() > 0)
                 		{
                 			String messageTemp = Accumulate(Cluster.get(ClusterCount),ZeroOneCounter,MessageLimitPerFrame);
                     		finalMessage += messageTemp;
                 		}
-                		if(shortCluster == 1)
-                		{
-                			shortCluster = 0;
-                		}
+                		
                 		ClusterCount++;
                 		ClusterCounter = 0;
                 		//pixelList.clear();
@@ -218,7 +199,7 @@ public class DecodeModule {
                     		ClusterCounter ++;
                 		}
                 	}
-                	else if(ClusterCount == 0 && ClusterCounter == 0 && shortCluster != 0)
+                	else if(ClusterCount == 0 && ClusterCounter == 0)
                 	{
                 		//System.out.println(ZeroOneCounter.size() + "3");
             			ZeroOneCounter.clear();
@@ -238,7 +219,7 @@ public class DecodeModule {
                         
                 		ClusterCounter ++;
                 	}
-                	else if(ClusterCount < Cluster.size() && shortCluster != 0)
+                	else if(ClusterCount < Cluster.size())
                 	{
                 		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,currentClusterSet);
                         Iterator<Location> iter = selectedPixels.iterator();

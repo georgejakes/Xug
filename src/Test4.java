@@ -61,7 +61,7 @@ public class Test4{
         // dispatch events to the attached listener
         while (mediaReader.readPacket() == null) ;
         Alternate alt = new Alternate();
-        System.out.println(alt.alternate(pixelList,8,32,limit));
+        //System.out.println(alt.alternate(pixelList,8,32,limit));
         System.out.println("Key Frame Count: " + keyFrameCount);
     }
 
