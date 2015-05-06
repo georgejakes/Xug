@@ -33,7 +33,7 @@ public class DecodeModule {
 	public static int shortCluster; // 0 - First Short Cluster found, 1 - second short cluster found, 2 - Actual cluster size match
 	public static int currentClusterSet;
 	public static boolean byClustList;
-	public static String endOfMessageText = ""+(char)3+(char)4;
+	public static String endOfMessageText = ""+(char)3+(char)4+(char)5;
 	
 	private static void init(boolean ClusterSet)
 	{
@@ -108,7 +108,9 @@ public class DecodeModule {
         resolution = new Resolution(coder.getWidth(), coder.getHeight());
         mediaReader.addListener(new ImageSnapListener());
         while (mediaReader.readPacket() == null) ;
-		return StringBinary.toString(finalMessage.split(endOfMessageText)[0]);
+        System.out.println(StringBinary.toString(finalMessage));
+        System.out.println(StringBinary.toString(finalMessage).split(endOfMessageText)[0]);
+		return StringBinary.toString(finalMessage).split(endOfMessageText)[0];
 	}
 	
 	private static class ImageSnapListener extends MediaListenerAdapter {

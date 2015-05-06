@@ -32,7 +32,7 @@ public class EncodeModule {
 	public static int MSBThreshold;
 	public static int[] ZeroOne;
 	public static boolean messageExhausted;
-	public static String endOfMessageText = ""+(char)3+(char)4;
+	public static String endOfMessageText = ""+(char)3+(char)4+(char)5+(char)6;
 	
 	private static void init()
 	{
@@ -147,7 +147,7 @@ public class EncodeModule {
         while (mediaReader.readPacket() == null) ;
         writer.close();
         container.close();
-        System.out.println(keyFrameCount);
+        System.out.println(message);
 		return true;
 	}
 	
@@ -250,12 +250,13 @@ public class EncodeModule {
             			bgrScreen.getRGB(0, resolution.maxHeight-1) & ZeroOne[0] );
             	bgrScreen.setRGB(resolution.maxWidth-1, resolution.maxHeight-1, 
             			bgrScreen.getRGB(resolution.maxWidth-1, resolution.maxHeight-1) & ZeroOne[0] );
+            	bitMessageCounter += messageLimitPerFrame;
             }
             ArrayList<Location> selectedPixels = new PSA().psa(messageLimitPerFrame, resolution, passphrase, clusterCounter);
-            System.out.println(clusterCounter);
+            //System.out.println(clusterCounter);
             Iterator<Location> iter = selectedPixels.iterator();
             int currentMessageBit = bitMessageCounter;
-            String messageToPrint = "";
+            String messageToPrint = "Cluster Number: "+ clusterCounter + " Frame Number: " + frameCount;
             while(iter.hasNext())
             {
             	Location l = iter.next();
@@ -271,6 +272,8 @@ public class EncodeModule {
                     	bgrScreen.setRGB(l.width, l.height, 
                     			bgrScreen.getRGB(l.width, l.height) & ZeroOne[0] );
                     }
+            		messageToPrint += " Pixel Change at: " + l.width + " , " + l.height + " to --> " + 
+							Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)) + ",";
             	}
             	else
             	{
@@ -280,11 +283,10 @@ public class EncodeModule {
             	
                 //pixelList.add(Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)));
                 //writer.encodeVideo(0, bgrScreen,System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
-                messageToPrint += " Pixel Change at: " + l.width + " , " + l.height + " to --> " + 
-                							Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)) + ",";
+                
                 currentMessageBit++;
             }
-            System.out.println(frameCount + messageToPrint);
+            System.out.println(messageToPrint);
             
             writer.encodeVideo(0, bgrScreen,event.getTimeStamp(event.getTimeUnit()), event.getTimeUnit());
             frameCount ++ ;
