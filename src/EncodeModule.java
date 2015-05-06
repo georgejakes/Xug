@@ -31,6 +31,8 @@ public class EncodeModule {
 	public static int clusterCounter;
 	public static int MSBThreshold;
 	public static int[] ZeroOne;
+	public static boolean messageExhausted;
+	public static String endOfMessageText = ""+(char)3+(char)4;
 	
 	private static void init()
 	{
@@ -44,6 +46,7 @@ public class EncodeModule {
 		bitMessage = "";
 		MSBThreshold = 0;
 		clusterCounter = 0;
+		messageExhausted = false;
 		//pixelList = new ArrayList<String>();
 	}
 	
@@ -61,6 +64,7 @@ public class EncodeModule {
 	public static boolean EncodeVideo(String inputFileName, String outputFileName, String message, int msgLimitPerFrame, String password, int clusterNumber, int threshold)
 	{
 		init();
+		message += endOfMessageText;
 		passphrase = new Passphrase(password);
         messageLimitPerFrame = msgLimitPerFrame;
         clusterLimit = clusterNumber;
@@ -181,7 +185,7 @@ public class EncodeModule {
             	throw new RuntimeException("Width does not match");
             }
             
-            if(clusterCount < clusterLimit)
+            if(clusterCount < clusterLimit && !messageExhausted)
             {
             	if(Character.getNumericValue(clusterString.charAt(clusterCount)) == 1)
             	{
@@ -207,7 +211,7 @@ public class EncodeModule {
             	}
             	clusterCount++;
             }
-            else
+            else if(!messageExhausted)
             {
             	clusterCount = 0;
             	if(Character.getNumericValue(clusterString.charAt(clusterCount)) == 1)
@@ -236,9 +240,22 @@ public class EncodeModule {
             	bitMessageCounter += messageLimitPerFrame;
             	clusterCounter++;
             }
+            else
+            {
+            	bgrScreen.setRGB(0, 0, 
+            			bgrScreen.getRGB(0, 0) & ZeroOne[0] );
+            	bgrScreen.setRGB(resolution.maxWidth-1, 0, 
+            			bgrScreen.getRGB(resolution.maxWidth-1, 0) & ZeroOne[0] );
+            	bgrScreen.setRGB(0, resolution.maxHeight-1, 
+            			bgrScreen.getRGB(0, resolution.maxHeight-1) & ZeroOne[0] );
+            	bgrScreen.setRGB(resolution.maxWidth-1, resolution.maxHeight-1, 
+            			bgrScreen.getRGB(resolution.maxWidth-1, resolution.maxHeight-1) & ZeroOne[0] );
+            }
             ArrayList<Location> selectedPixels = new PSA().psa(messageLimitPerFrame, resolution, passphrase, clusterCounter);
+            System.out.println(clusterCounter);
             Iterator<Location> iter = selectedPixels.iterator();
             int currentMessageBit = bitMessageCounter;
+            String messageToPrint = "";
             while(iter.hasNext())
             {
             	Location l = iter.next();
@@ -255,15 +272,19 @@ public class EncodeModule {
                     			bgrScreen.getRGB(l.width, l.height) & ZeroOne[0] );
                     }
             	}
+            	else
+            	{
+            		messageExhausted = true;
+            	}
             	
-            	System.out.println(frameCount + ". Pixel Change at: " + l.width + " , " + l.height
-                		+ " to --> " + Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)));
+            	
                 //pixelList.add(Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)));
                 //writer.encodeVideo(0, bgrScreen,System.nanoTime() - startTime, TimeUnit.NANOSECONDS);
-                
+                messageToPrint += " Pixel Change at: " + l.width + " , " + l.height + " to --> " + 
+                							Integer.toBinaryString(bgrScreen.getRGB(l.width, l.height)) + ",";
                 currentMessageBit++;
             }
-            
+            System.out.println(frameCount + messageToPrint);
             
             writer.encodeVideo(0, bgrScreen,event.getTimeStamp(event.getTimeUnit()), event.getTimeUnit());
             frameCount ++ ;

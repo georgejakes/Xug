@@ -68,10 +68,10 @@ public boolean CheckContains(ArrayList<Location> list,int width,int height ){
 			Location l=new Location();
 			if(i==0)
 			{	
-//				l.width=passphrase.getcode()*(counter+1)%res.maxWidth;
-//				l.height=passphrase.getcode()*(counter+1)%res.maxHeight;
-				l.width=1920;
-				l.height=1080;
+				l.width=passphrase.getcode()*(counter+1)%res.maxWidth;
+				l.height=passphrase.getcode()*(counter+1)%res.maxHeight;
+//				l.width=1920;
+//				l.height=1080;
 				if(IsBoundry(l.width,l.height,res)){
 					
 					

@@ -2,10 +2,8 @@ import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 import com.xuggle.mediatool.IMediaReader;
-import com.xuggle.mediatool.IMediaViewer;
 import com.xuggle.mediatool.MediaListenerAdapter;
 import com.xuggle.mediatool.ToolFactory;
 import com.xuggle.mediatool.event.IVideoPictureEvent;
@@ -35,6 +33,7 @@ public class DecodeModule {
 	public static int shortCluster; // 0 - First Short Cluster found, 1 - second short cluster found, 2 - Actual cluster size match
 	public static int currentClusterSet;
 	public static boolean byClustList;
+	public static String endOfMessageText = ""+(char)3+(char)4;
 	
 	private static void init(boolean ClusterSet)
 	{
@@ -109,7 +108,7 @@ public class DecodeModule {
         resolution = new Resolution(coder.getWidth(), coder.getHeight());
         mediaReader.addListener(new ImageSnapListener());
         while (mediaReader.readPacket() == null) ;
-		return StringBinary.toString(finalMessage);
+		return StringBinary.toString(finalMessage.split(endOfMessageText)[0]);
 	}
 	
 	private static class ImageSnapListener extends MediaListenerAdapter {
