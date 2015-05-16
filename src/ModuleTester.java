@@ -33,14 +33,15 @@ public class ModuleTester {
 //		{
 //			System.out.print(i);
 //		}
-		System.out.println(("Ab"+(char)3 + (char) 4 +"cd").contains(""+(char)3+(char)4));
-		Resolution res = new Resolution(1920,1080);
-		Passphrase passphrase = new Passphrase("password");
-		ArrayList<Location> selectedPixels = new PSA().psa(4, res, passphrase , 0);
-		System.out.println(" " + selectedPixels.get(0).width + "," + selectedPixels.get(0).height + " " + 
-														selectedPixels.get(1).width + "," + selectedPixels.get(0).height + " " +
-															selectedPixels.get(2).width + "," + selectedPixels.get(0).height);
-		
+//		System.out.println(("Ab"+(char)3 + (char) 4 +"cd").contains(""+(char)3+(char)4));
+//		Resolution res = new Resolution(1920,1080);
+//		Passphrase passphrase = new Passphrase("password");
+//		ArrayList<Location> selectedPixels = new PSA().psa(4, res, passphrase , 0);
+//		System.out.println(" " + selectedPixels.get(0).width + "," + selectedPixels.get(0).height + " " + 
+//														selectedPixels.get(1).width + "," + selectedPixels.get(0).height + " " +
+//															selectedPixels.get(2).width + "," + selectedPixels.get(0).height);
+//		
+		System.out.println(ValidateParameters.EncodeParameterValidate("/media/shell/Misc/MiniMarathonRagam2015.mp4", "Hi, ted. How are you today?", 3, 5));
 	}
 }
 

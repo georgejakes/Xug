@@ -5,7 +5,7 @@ import com.xuggle.xuggler.IStreamCoder;
 
 public class Test3 {
     
-    private static final String filename = "/home/shell/new/d.mp4";
+    private static final String filename = "/media/shell/Misc/MiniMarathonRagam2015.mp4";
     
     public static void main(String[] args) {
         
