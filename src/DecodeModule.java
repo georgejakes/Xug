@@ -19,22 +19,26 @@ public class DecodeModule {
 	public static int mAudioStreamIndex, mVideoStreamIndex, frameCount, keyFrameCount;
 	public static Resolution resolution;
 	public static ArrayList<Integer> pixelList;
-	public static int MSBThreshold;
-	public static int MessageLimitPerFrame;
-	public static Passphrase passphrase;
-	public static boolean ClusterSetting; 
-	public static String ClusterString;
-	public static ArrayList<Integer> Cluster;
+	public static int MSBThreshold;	//Number of MSB's changed per color.
+	public static int MessageLimitPerFrame;	//Number of message bits in one frame.
+	public static Passphrase passphrase; //Password variable
+	public static boolean ClusterSetting; //Phase 1 or Phase 2 of Decode process
+	public static String ClusterString;	//Cluster identification string returned during Phase 1
+	public static ArrayList<Integer> Cluster;	//Set of clusters
 	public static int ClusterCount;	//Counts current cluster being focused
 	public static int ClusterCounter; //Counts individual cluster volume
-	public static int ClusterSize;
-	public static ArrayList<ZeroOne> ZeroOneCounter;
-	public static String finalMessage;
+	public static int ClusterSize;	//Size per cluster
+	public static ArrayList<ZeroOne> ZeroOneCounter;	//Zero One Counter
+	public static String finalMessage;	//Final return message for phase 2
 	public static int shortCluster; // 0 - First Short Cluster found, 1 - second short cluster found, 2 - Actual cluster size match
-	public static int currentClusterSet;
-	public static boolean byClustList;
-	public static String endOfMessageText = ""+(char)3+(char)4+(char)5;
+	public static int currentClusterSet;	//Current cluster that is being focused without Cluster Decoding happening.
+	public static boolean byClustList; //Set to true, if clustering is used.
+	public static String endOfMessageText = ""+(char)3+(char)4+(char)5; //End of message character set to be searched.
 	
+	/**
+	 * Initializes all variables
+	 * @param ClusterSet Phase 1 or Phase 2 of Decoding process.
+	 */
 	private static void init(boolean ClusterSet)
 	{
 		pixelList = new ArrayList<Integer>();
@@ -52,7 +56,12 @@ public class DecodeModule {
 		shortCluster = 2;
 		currentClusterSet = 0;
 	}
-	
+	/**
+	 * Phase 1 - Decodes cluster parameters from a video and returns the CLuster identification string
+	 * @param inputFileName	Input file name
+	 * @param threshold Number of bits that should be modified in the MSB per color
+	 * @return	Cluster String for cluster identification
+	 */
 	public static String DecodeVideo(String inputFileName, int threshold)
 	{
 		init(true);
@@ -81,6 +90,17 @@ public class DecodeModule {
 		return ClusterString;
 	}
 	
+	/**
+	 * Decodes the Steganographic message embedded in the Cluster.
+	 * @param inputFileName	Input file name
+	 * @param MsgLimitPerFrame	Number of bits per frame
+	 * @param password	Password for decryption
+	 * @param clusterList	List based cluster lengths
+	 * @param clusterSize	Size defined per cluster
+	 * @param threshold	MSB per color changed
+	 * @param byClusterList	Decode by clustering or not.
+	 * @return	Decoded message from the video
+	 */
 	public static String DecodeVideo(String inputFileName, int MsgLimitPerFrame, String password, ArrayList<Integer> clusterList, int clusterSize, int threshold, boolean byClusterList)
 	{
 		init(false);
@@ -164,10 +184,10 @@ public class DecodeModule {
             }
             else
             {
-            	currentClusterSet = frameCount/ClusterSize;
+            	
             	if(byClustList)
             	{
-            		
+       
                 	if(ClusterCount < Cluster.size() && ClusterCounter >= Cluster.get(ClusterCount))
                 	{
                 		if(ZeroOneCounter.size() > 0)
@@ -182,8 +202,9 @@ public class DecodeModule {
                 		if(ClusterCount < Cluster.size())
                 		{
                 			//System.out.println(ZeroOneCounter.size() + "1");
+                			System.out.println("Cluster: " + ClusterCount + " ");
                 			ZeroOneCounter.clear();
-                    		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,currentClusterSet);
+                    		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,ClusterCount);
                             Iterator<Location> iter = selectedPixels.iterator();
                             while(iter.hasNext())
                             {
@@ -202,9 +223,9 @@ public class DecodeModule {
                 	}
                 	else if(ClusterCount == 0 && ClusterCounter == 0)
                 	{
-                		//System.out.println(ZeroOneCounter.size() + "3");
+                		System.out.println("Cluster: " + ClusterCount + " ");
             			ZeroOneCounter.clear();
-                		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,currentClusterSet);
+                		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,ClusterCount);
                         Iterator<Location> iter = selectedPixels.iterator();
                         while(iter.hasNext())
                         {
@@ -222,7 +243,8 @@ public class DecodeModule {
                 	}
                 	else if(ClusterCount < Cluster.size())
                 	{
-                		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,currentClusterSet);
+                		System.out.println("Cluster: " + ClusterCount + " ");
+                		ArrayList<Location> selectedPixels = new PSA().psa(MessageLimitPerFrame, resolution, passphrase,ClusterCount);
                         Iterator<Location> iter = selectedPixels.iterator();
                         int i=0;
                         while(iter.hasNext())
@@ -248,6 +270,7 @@ public class DecodeModule {
             	}
             	else
             	{
+            		currentClusterSet = frameCount/ClusterSize;
                 	if(ClusterCount < Cluster.size() && ClusterCounter >= ClusterSize)
                 	{
                 		String messageTemp = Accumulate(ClusterSize,ZeroOneCounter,MessageLimitPerFrame);
